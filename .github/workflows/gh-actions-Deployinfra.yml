@@ -1,4 +1,5 @@
 name: Deploy Infrastructure
+
 on:
   push:
     branches:
@@ -6,18 +7,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
-  contents: read
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      id-token: write
+      contents: read
 
 jobs:
   DeployDevInfrastructure_Stage_DeployInfrastructure:
     name: Deploy Development Infrastructure
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v2
     - # "Note: the 'AZURE_CLIENT_ID' and 'AZURE_TENANT_ID' secret is required to be added into GitHub Secrets. See this blog post for details: https://samlearnsazure.blog/2019/12/13/github-actions/"
       name: Azure Login
       uses: azure/login@v2
@@ -25,14 +23,17 @@ jobs:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         allow-no-subscriptions: true
-    - uses: azure/cli@v2
+
+    - uses: azure/cli@v1.0.0
       name: Create Resource Group
       with:
         inlineScript: |
           az group create --name ${{ secrets.DEVRESOURCEGROUP }} --location ${{ secrets.LOCATION }} --tags LabInstance=${{ secrets.LABINSTANCEID }}
+
           az group create --name ${{ secrets.PRODRESOURCEGROUP }} --location ${{ secrets.LOCATION }} --tags LabInstance=${{ secrets.LABINSTANCEID }}
         azcliversion: latest
-    - uses: azure/cli@v2
+
+    - uses: azure/cli@v1.0.0
       with:
         inlineScript: az deployment group create --resource-group ${{ secrets.DEVRESOURCEGROUP }} --name deployinfradev --template-file ARM-DevSecOps.json
         azcliversion: latest
@@ -42,7 +43,7 @@ jobs:
     needs: [DeployDevInfrastructure_Stage_DeployInfrastructure]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v2
     - # "Note: the 'AZURE_CLIENT_ID' and 'AZURE_TENANT_ID' secret is required to be added into GitHub Secrets. See this blog post for details: https://samlearnsazure.blog/2019/12/13/github-actions/"
       name: Azure Login
       uses: azure/login@v2
@@ -50,7 +51,7 @@ jobs:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         allow-no-subscriptions: true
-    - uses: azure/cli@v2
+    - uses: azure/cli@v1.0.0
       with:
         inlineScript: az deployment group create --resource-group ${{ secrets.PRODRESOURCEGROUP }} --name deployinfraprod --template-file ARM-DevSecOps-Prod.json
         azcliversion: latest
